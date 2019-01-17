@@ -17,3 +17,5 @@ $ gcloud functions deploy gcp-oidc-proxy \
   IAM" role.
 - A `CLIENT_ID` environment variable needs to be set containing the OAuth2
   client ID, e.g. the client ID used by IAP.
+- The service account for the Cloud Function needs to be added as a member of
+  the protected resource with appropriate roles configured.

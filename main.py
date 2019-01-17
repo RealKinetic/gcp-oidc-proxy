@@ -62,6 +62,7 @@ def handle_request(proxied_request):
     path = proxied_request.path
     if not path:
         path = '/'
+    # TODO: Implement proper wildcarding for paths.
     if '*' not in _whitelist and path not in _whitelist:
         print('Rejected {} {}, not in whitelist'.format(
             proxied_request.method, proxied_request.url))

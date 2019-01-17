@@ -24,3 +24,15 @@ $ gcloud functions deploy gcp-oidc-proxy \
   whitelist all paths.
 - The service account for the Cloud Function needs to be added as a member of
   the protected resource with appropriate roles configured.
+
+## Local Development
+
+You can run the function locally with:
+
+```sh
+$ python test.py
+```
+
+This will start an HTTP server which maps requests to the Cloud Function. This
+requires setting the `GOOGLE_APPLICATION_CREDENTIALS` environment variable to a
+service account credentials file which has the IAM roles described above.

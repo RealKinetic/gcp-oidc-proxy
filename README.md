@@ -1,9 +1,10 @@
 # gcp-oidc-proxy
 
-Google Cloud Function for proxying requests to OIDC-authenticated endpoints.
-For example, this can be used to make authenticated requests to resources
-protected by a GCP [Identity Aware Proxy (IAP)](https://cloud.google.com/iap/)
-using a service account.
+Google Cloud Function for proxying requests to
+[OIDC-authenticated](https://openid.net/connect/) endpoints. For example, this
+can be used to make authenticated requests to resources protected by a GCP
+[Identity Aware Proxy (IAP)](https://cloud.google.com/iap/) using a service
+account.
 
 ## Deployment
 

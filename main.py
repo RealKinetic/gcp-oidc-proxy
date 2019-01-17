@@ -58,6 +58,10 @@ def handle_request(proxied_request):
     if not host:
         return 'Required header {} not present'.format(HOST_HEADER), 400
 
+    scheme = proxied_request.headers.get('X-Forwarded-Proto', 'https')
+    url = '{}://{}{}'.format(scheme, host, proxied_request.path)
+    headers = dict(proxied_request.headers)
+
     # Check path against whitelist.
     path = proxied_request.path
     if not path:
@@ -65,12 +69,8 @@ def handle_request(proxied_request):
     # TODO: Implement proper wildcarding for paths.
     if '*' not in _whitelist and path not in _whitelist:
         print('Rejected {} {}, not in whitelist'.format(
-            proxied_request.method, proxied_request.url))
+            proxied_request.method, url))
         return 'Requested path {} not in whitelist'.format(path), 403
-
-    scheme = proxied_request.headers.get('X-Forwarded-Proto', 'https')
-    url = '{}://{}{}'.format(scheme, host, proxied_request.path)
-    headers = dict(proxied_request.headers)
 
     global _oidc_token
     if not _oidc_token or _oidc_token.is_expired():

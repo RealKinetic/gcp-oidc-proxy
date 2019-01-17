@@ -75,6 +75,8 @@ def handle_request(proxied_request):
     global _oidc_token
     if not _oidc_token or _oidc_token.is_expired():
         _oidc_token = _get_google_oidc_token()
+        print('Renewed OIDC bearer token for {}'.format(
+            _adc_credentials.service_account_email))
 
     # Add the Authorization header with the OIDC token.
     headers['Authorization'] = 'Bearer {}'.format(_oidc_token)

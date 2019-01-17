@@ -17,6 +17,10 @@ _oidc_token = None
 _session = Session()
 _adc_credentials, _ = google.auth.default(scopes=[IAM_SCOPE])
 
+_whitelist = os.getenv('WHITELIST', [])
+if _whitelist:
+    _whitelist = [p.strip() for p in _whitelist.split(',')]
+
 # For service accounts using the Compute Engine metadata service, which is the
 # case for Cloud Function service accounts, service_account_email isn't
 # available until refresh is called.
@@ -53,6 +57,15 @@ def handle_request(proxied_request):
     host = proxied_request.headers.get(HOST_HEADER)
     if not host:
         return 'Required header {} not present'.format(HOST_HEADER), 400
+
+    # Check path against whitelist.
+    path = proxied_request.path
+    if not path:
+        path = '/'
+    if '*' not in _whitelist and path not in _whitelist:
+        print('Rejected {} {}, not in whitelist'.format(
+            proxied_request.method, proxied_request.url))
+        return 'Requested path {} not in whitelist'.format(path), 403
 
     scheme = proxied_request.headers.get('X-Forwarded-Proto', 'https')
     url = '{}://{}{}'.format(scheme, host, proxied_request.path)

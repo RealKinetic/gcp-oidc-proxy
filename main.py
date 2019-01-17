@@ -1,7 +1,9 @@
+import logging
 import os
 import time
 
 import google.auth
+from google.auth import iam
 from google.auth.transport.requests import Request as GRequest
 from google.oauth2.service_account import Credentials
 import jwt
@@ -30,7 +32,7 @@ _adc_credentials.refresh(GRequest())
 # account key, we use the IAM signBlob API to sign instead. In order for this
 # to work, the Cloud Function's service account needs the "Service Account
 # Actor" role.
-_signer = google.auth.iam.Signer(
+_signer = iam.Signer(
     GRequest(), _adc_credentials, _adc_credentials.service_account_email)
 
 
@@ -68,14 +70,14 @@ def handle_request(proxied_request):
         path = '/'
     # TODO: Implement proper wildcarding for paths.
     if '*' not in _whitelist and path not in _whitelist:
-        print('Rejected {} {}, not in whitelist'.format(
+        logging.warn('Rejected {} {}, not in whitelist'.format(
             proxied_request.method, url))
         return 'Requested path {} not in whitelist'.format(path), 403
 
     global _oidc_token
     if not _oidc_token or _oidc_token.is_expired():
         _oidc_token = _get_google_oidc_token()
-        print('Renewed OIDC bearer token for {}'.format(
+        logging.info('Renewed OIDC bearer token for {}'.format(
             _adc_credentials.service_account_email))
 
     # Add the Authorization header with the OIDC token.
@@ -89,7 +91,7 @@ def handle_request(proxied_request):
 
     # Send the proxied request.
     prepped = request.prepare()
-    print('{} {}'.format(prepped.method, prepped.url))
+    logging.info('{} {}'.format(prepped.method, prepped.url))
     resp = _session.send(prepped)
 
     # Strip hop-by-hop headers and Content-Encoding.

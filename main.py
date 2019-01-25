@@ -1,7 +1,9 @@
+from functools import wraps
 import logging
 import os
 import time
 
+from flask import request
 import google.auth
 from google.auth import iam
 from google.auth.transport.requests import Request as GRequest
@@ -23,6 +25,9 @@ _whitelist = os.getenv('WHITELIST', [])
 if _whitelist:
     _whitelist = [p.strip() for p in _whitelist.split(',')]
 
+_username = os.getenv('AUTH_USERNAME')
+_password = os.getenv('AUTH_PASSWORD')
+
 # For service accounts using the Compute Engine metadata service, which is the
 # case for Cloud Function service accounts, service_account_email isn't
 # available until refresh is called.
@@ -34,6 +39,20 @@ _adc_credentials.refresh(GRequest())
 # Actor" role.
 _signer = iam.Signer(
     GRequest(), _adc_credentials, _adc_credentials.service_account_email)
+
+
+def requires_auth(f):
+    """Decorator to enforce Basic authentication on requests."""
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth = request.authorization
+        if _is_auth_enabled():
+            if not auth or not _check_auth(auth.username, auth.password):
+                return ('Could not verify your access level for that URL.\n'
+                        'You have to login with proper credentials.', 401,
+                        {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        return f(*args, **kwargs)
+    return decorated
 
 
 class OIDCToken(object):
@@ -49,6 +68,7 @@ class OIDCToken(object):
         return int(time.time()) >= self._claims['exp']
 
 
+@requires_auth
 def handle_request(proxied_request):
     """Proxy the given request to the URL in the Forward-Host header with an
     Authorization header set using an OIDC bearer token for the Cloud
@@ -160,3 +180,12 @@ def _strip_hop_by_hop_headers(headers):
     """Return a dict with HTTP/1.1 "Hop-by-Hop" headers removed."""
     return {k: v for (k, v) in headers.items() if not _is_hop_by_hop(k)}
 
+
+def _check_auth(username, password):
+    """Validate a username/password combination."""
+    return username == _username and password == _password
+
+
+def _is_auth_enabled():
+    """Return True if authentication is enabled, False if not."""
+    return _username is not None and _password is not None

@@ -24,6 +24,9 @@ $ gcloud functions deploy gcp-oidc-proxy \
   whitelist all paths.
 - The service account for the Cloud Function needs to be added as a member of
   the protected resource with appropriate roles configured.
+- Optionally, Basic authentication can be enabled by setting `AUTH_USERNAME`
+  and `AUTH_PASSWORD` environment variables. If either of these is not set,
+  authentication is disabled.
 
 ## Local Development
 
